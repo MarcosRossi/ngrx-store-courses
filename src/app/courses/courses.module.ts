@@ -30,6 +30,11 @@ import { EffectsModule } from '@ngrx/effects';
 import { CoursesEffects } from './courses.effects';
 import { StoreModule } from '@ngrx/store';
 import { coursesReducer } from './reducers/courses.reducers';
+import { CourseEntityService } from './services/course-entity.service';
+import { CourseResolver } from './services/course.resolver';
+import { CoursesDataService } from './services/courses-data.service';
+import { LessonEntityService } from './services/lesson-entity.-service';
+import { LessonsDataService } from './services/lesson-data.service';
 
 
 export const coursesRoutes: Routes = [
@@ -37,7 +42,8 @@ export const coursesRoutes: Routes = [
     path: '',
     component: HomeComponent,
     resolve: {
-      courses: CoursesResolver
+      // courses: CoursesResolver
+      courses: CourseResolver
     }
   },
   {
@@ -46,7 +52,18 @@ export const coursesRoutes: Routes = [
   }
 ];
 
-
+const entityMetadata: EntityMetadataMap = {
+  Course: {
+    sortComparer: compareCourses,
+    // optimistics (Actualiza instaneo la UI a pesar que el BE esta en pending para update.)
+    entityDispatcherOptions: {
+      optimisticUpdate: true
+    }
+  },
+  Lesson: {
+    sortComparer: compareLessons
+  }
+};
 @NgModule({
   imports: [
     CommonModule,
@@ -84,14 +101,25 @@ export const coursesRoutes: Routes = [
   entryComponents: [EditCourseDialogComponent],
   providers: [
     CoursesHttpService,
-    CoursesResolver
+    // ngrx entity data service
+    CourseEntityService,
+    LessonEntityService,
+    // CoursesResolver,
+    CourseResolver,
+    CoursesDataService,
+    LessonsDataService
   ]
 })
 export class CoursesModule {
 
-  constructor() {
-
+  constructor(
+    private eds: EntityDefinitionService,
+    private entityDataService: EntityDataService,
+    private courseDataService: CoursesDataService,
+    private lessonsDataService: LessonsDataService) {
+    eds.registerMetadataMap(entityMetadata);
+    // no usar el por default behiveour
+    entityDataService.registerService('Course', courseDataService);
+    entityDataService.registerService('Lesson', lessonsDataService);
   }
-
-
 }
